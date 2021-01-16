@@ -1,0 +1,37 @@
+<html>
+  <body>
+    <ul id="data"></ul>
+    <script>
+    let ignoredDirs = ["tiles_png", "mp3"];
+    let jitsiPrefix = "https://coremeet.workadventu.re/osg-ntq-ubl-";
+
+    async function fetchWithRecursion(url) {
+      const response = await fetch(url);
+      const data = await response.json();
+      for (let file of data) {
+        if(file.type == "dir" && !ignoredDirs.includes(file.name)){
+          fetchWithRecursion("https://api.github.com/repos/hsbe/hsbe.github.io/contents/"+file.path);
+        }else if(file.type == "file" && file.name.endsWith(".json") ){
+          const map = await fetch("https://hsbe.world/"+file.path);
+          const mapData = await map.json();
+          if(Object.prototype.hasOwnProperty.call(mapData, 'layers')){
+            mapData.layers.forEach(function(layer) {
+              if(Object.prototype.hasOwnProperty.call(layer, 'properties')){
+                if(layer.properties[0].name == "jitsiRoom"){
+                  var li = document.createElement("li");
+                  var a = document.createElement("a");
+                  a.appendChild(document.createTextNode(layer.properties[0].value));
+                  a.setAttribute("href", jitsiPrefix+layer.properties[0].value);
+                  li.appendChild(a);
+                  document.getElementById("data").appendChild(li);
+                }
+              }
+            });
+          }
+        }
+      }
+    }
+    fetchWithRecursion("https://api.github.com/repos/hsbe/hsbe.github.io/contents/");
+    </script>
+  <body>
+</html>
